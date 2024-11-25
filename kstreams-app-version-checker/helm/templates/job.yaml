@@ -18,7 +18,18 @@ spec:
       labels:
         app: {{ $jobName }}
         release: {{ .Release.Name }}
+        {{- with merge .Values.podLabels .Values.commonPodLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with merge .Values.podAnnotations .Values.commonPodAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: kstreams-app-version-checker
           image: {{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tagOverride }}
@@ -32,7 +43,11 @@ spec:
               value: {{ int .Values.waitSeconds | default 360 | quote }}
             - name: WORKLOADS
               value: "{{ range $workload := .Values.workloads }}{{ $workload.name }},{{ $workload.type }},{{ $workload.container }};{{ end }}"
-          {{- with .Values.securityContext }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.containerSecurityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}

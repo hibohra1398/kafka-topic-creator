@@ -13,13 +13,13 @@ spec:
     metadata:
       labels:
         app: {{ .Values.jobName }}
-        {{- with .Values.podLabels }}
+        {{- with merge .Values.podLabels .Values.commonPodLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.podAnnotations }}
+      {{- with merge .Values.podAnnotations .Values.commonPodAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
-      {{- end}}
+      {{- end }}
     spec:
       containers:
         - name: topic-creator
@@ -29,6 +29,10 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
             {{- toYaml .Values.env | nindent 12 }}
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: configs
               mountPath: /opt/kafka
@@ -49,7 +53,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.securityContext }}
+      {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
